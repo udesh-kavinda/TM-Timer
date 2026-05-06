@@ -62,6 +62,8 @@ export default function SpeechTimer() {
   const [isEditingThresholds, setIsEditingThresholds] = useState(false)
   const [editingThresholds, setEditingThresholds] = useState<TimeThresholds>({ ...DEFAULT_THRESHOLDS })
   const [selectedPreset, setSelectedPreset] = useState<string>("Table Topics")
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false)
+  const [customThresholds, setCustomThresholds] = useState<TimeThresholds>({ ...DEFAULT_THRESHOLDS })
 
   // Ref to keep track of the next speaker number
   const nextSpeakerNumberRef = useRef(2) // Start at 2 since we already have Speaker 1
@@ -410,12 +412,57 @@ export default function SpeechTimer() {
         </div>
       </div>
 
-      {/* Active Speaker Name and Settings */}
-      <div className="w-full max-w-md mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold">{activeSpeaker.name}</h2>
-        <button onClick={() => setIsEditingThresholds(true)} className="p-2 rounded-full bg-muted text-foreground">
-          <Settings size={20} />
-        </button>
+      {/* Active Speaker Name and Presets */}
+      <div className="w-full max-w-md mb-4">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-semibold">{activeSpeaker.name}</h2>
+          <button onClick={() => setIsEditingThresholds(true)} className="p-2 rounded-full bg-muted text-foreground">
+            <Settings size={20} />
+          </button>
+        </div>
+
+        {/* Time Presets */}
+        <div className="flex flex-wrap gap-2">
+          {timePresets.map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => {
+                setSpeakers(
+                  speakers.map((speaker) =>
+                    speaker.id === activeSpeakerId
+                      ? {
+                          ...speaker,
+                          thresholds: {
+                            green: preset.green,
+                            yellow: preset.yellow,
+                            red: preset.red,
+                          },
+                        }
+                      : speaker,
+                  ),
+                )
+              }}
+              className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                activeSpeaker.thresholds.green === preset.green &&
+                activeSpeaker.thresholds.yellow === preset.yellow &&
+                activeSpeaker.thresholds.red === preset.red
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-background text-foreground border-border hover:border-blue-500"
+              }`}
+            >
+              {preset.name}
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              setCustomThresholds({ ...activeSpeaker.thresholds })
+              setIsCustomModalOpen(true)
+            }}
+            className="px-3 py-1 rounded-full text-sm font-medium border bg-background text-foreground border-border hover:border-blue-500 transition-colors"
+          >
+            Custom
+          </button>
+        </div>
       </div>
 
       {/* Timer Display */}
@@ -459,19 +506,19 @@ export default function SpeechTimer() {
         Finish & Save
       </button>
 
-      {/* Time Thresholds */}
-      <div className="grid grid-cols-3 gap-4 text-center w-full max-w-md mb-6">
-        <div className="p-2 border rounded-lg">
-          <div className="mx-auto h-4 w-4 rounded-full bg-green-500 mb-1"></div>
-          <span className="text-sm">{formatTime(activeSpeaker.thresholds.green)}</span>
+      {/* Time Thresholds Display */}
+      <div className="grid grid-cols-3 gap-4 text-center w-full max-w-md mb-6 px-4">
+        <div className="p-3 border rounded-lg bg-muted">
+          <div className="mx-auto h-4 w-4 rounded-full bg-green-500 mb-2"></div>
+          <span className="text-sm font-medium">{formatTime(activeSpeaker.thresholds.green)}</span>
         </div>
-        <div className="p-2 border rounded-lg">
-          <div className="mx-auto h-4 w-4 rounded-full bg-yellow-500 mb-1"></div>
-          <span className="text-sm">{formatTime(activeSpeaker.thresholds.yellow)}</span>
+        <div className="p-3 border rounded-lg bg-muted">
+          <div className="mx-auto h-4 w-4 rounded-full bg-yellow-500 mb-2"></div>
+          <span className="text-sm font-medium">{formatTime(activeSpeaker.thresholds.yellow)}</span>
         </div>
-        <div className="p-2 border rounded-lg">
-          <div className="mx-auto h-4 w-4 rounded-full bg-red-500 mb-1"></div>
-          <span className="text-sm">{formatTime(activeSpeaker.thresholds.red)}</span>
+        <div className="p-3 border rounded-lg bg-muted">
+          <div className="mx-auto h-4 w-4 rounded-full bg-red-500 mb-2"></div>
+          <span className="text-sm font-medium">{formatTime(activeSpeaker.thresholds.red)}</span>
         </div>
       </div>
 
@@ -481,20 +528,32 @@ export default function SpeechTimer() {
           <div className="bg-card rounded-lg p-6 w-full max-w-md">
             <h3 className="text-xl font-bold mb-4">Time Settings for {activeSpeaker.name}</h3>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Preset</label>
-              <select
-                value={selectedPreset}
-                onChange={(e) => handlePresetChange(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-background text-foreground"
-              >
-                <option value="custom">Custom</option>
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">Quick Presets</label>
+              <div className="flex flex-wrap gap-2">
                 {timePresets.map((preset) => (
-                  <option key={preset.name} value={preset.name}>
+                  <button
+                    key={preset.name}
+                    onClick={() => {
+                      setEditingThresholds({
+                        green: preset.green,
+                        yellow: preset.yellow,
+                        red: preset.red,
+                      })
+                      setSelectedPreset(preset.name)
+                    }}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      editingThresholds.green === preset.green &&
+                      editingThresholds.yellow === preset.yellow &&
+                      editingThresholds.red === preset.red
+                        ? "bg-blue-500 text-white"
+                        : "bg-muted text-foreground hover:bg-blue-400 hover:text-white"
+                    }`}
+                  >
                     {preset.name}
-                  </option>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
             <div className="space-y-4 mb-6">
@@ -556,6 +615,94 @@ export default function SpeechTimer() {
               </button>
               <button
                 onClick={saveThresholds}
+                className="flex-1 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center"
+              >
+                <Check size={18} className="mr-2" /> Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Thresholds Modal */}
+      {isCustomModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Custom Time Settings</h3>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium mb-1">Green (minutes)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={secondsToMinutes(customThresholds.green)}
+                  onChange={(e) =>
+                    setCustomThresholds({
+                      ...customThresholds,
+                      green: minutesToSeconds(e.target.value),
+                    })
+                  }
+                  className="w-full p-2 border rounded-lg bg-background text-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Yellow (minutes)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={secondsToMinutes(customThresholds.yellow)}
+                  onChange={(e) =>
+                    setCustomThresholds({
+                      ...customThresholds,
+                      yellow: minutesToSeconds(e.target.value),
+                    })
+                  }
+                  className="w-full p-2 border rounded-lg bg-background text-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Red (minutes)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={secondsToMinutes(customThresholds.red)}
+                  onChange={(e) =>
+                    setCustomThresholds({
+                      ...customThresholds,
+                      red: minutesToSeconds(e.target.value),
+                    })
+                  }
+                  className="w-full p-2 border rounded-lg bg-background text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsCustomModalOpen(false)}
+                className="flex-1 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (customThresholds.green >= customThresholds.yellow || customThresholds.yellow >= customThresholds.red) {
+                    alert("Times must be in order: Green < Yellow < Red")
+                    return
+                  }
+                  setSpeakers(
+                    speakers.map((speaker) =>
+                      speaker.id === activeSpeakerId ? { ...speaker, thresholds: customThresholds } : speaker,
+                    ),
+                  )
+                  setIsCustomModalOpen(false)
+                }}
                 className="flex-1 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center"
               >
                 <Check size={18} className="mr-2" /> Save
