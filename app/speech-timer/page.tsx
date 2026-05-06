@@ -60,7 +60,6 @@ export default function SpeechTimer() {
   const [editingSpeakerId, setEditingSpeakerId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState<string>("")
   const [isRunning, setIsRunning] = useState(false)
-  const [records, setRecords] = useState<SpeechRecord[]>([])
   const [isEditingThresholds, setIsEditingThresholds] = useState(false)
   const [editingThresholds, setEditingThresholds] = useState<TimeThresholds>({ ...DEFAULT_THRESHOLDS })
   const [selectedPreset, setSelectedPreset] = useState<string>("Table Topics")
