@@ -323,7 +323,52 @@ export default function SpeechTimer() {
 
   return (
     <div className="flex min-h-screen flex-col items-center p-4 pb-20">
-      <h1 className="text-2xl font-bold mb-4">Speech Timer</h1>
+      <h1 className="text-2xl font-bold mb-6">Speech Timer</h1>
+
+      {/* Time Presets Section - Above Speakers */}
+      <div className="w-full max-w-md mb-6">
+        <div className="flex flex-wrap gap-2">
+          {timePresets.map((preset) => (
+            <button
+              key={preset.name}
+              onClick={() => {
+                setSpeakers(
+                  speakers.map((speaker) =>
+                    speaker.id === activeSpeakerId
+                      ? {
+                          ...speaker,
+                          thresholds: {
+                            green: preset.green,
+                            yellow: preset.yellow,
+                            red: preset.red,
+                          },
+                        }
+                      : speaker,
+                  ),
+                )
+              }}
+              className={`px-3 py-2 rounded-full text-sm font-medium border transition-colors ${
+                activeSpeaker.thresholds.green === preset.green &&
+                activeSpeaker.thresholds.yellow === preset.yellow &&
+                activeSpeaker.thresholds.red === preset.red
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-background text-foreground border-border hover:border-blue-500"
+              }`}
+            >
+              {preset.name}
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              setCustomThresholds({ ...activeSpeaker.thresholds })
+              setIsCustomModalOpen(true)
+            }}
+            className="px-3 py-2 rounded-full text-sm font-medium border bg-background text-foreground border-border hover:border-blue-500 transition-colors"
+          >
+            Custom
+          </button>
+        </div>
+      </div>
 
       {/* Speaker Selection */}
       <div className="w-full max-w-md mb-4">
@@ -412,57 +457,12 @@ export default function SpeechTimer() {
         </div>
       </div>
 
-      {/* Active Speaker Name and Presets */}
-      <div className="w-full max-w-md mb-4">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold">{activeSpeaker.name}</h2>
-          <button onClick={() => setIsEditingThresholds(true)} className="p-2 rounded-full bg-muted text-foreground">
-            <Settings size={20} />
-          </button>
-        </div>
-
-        {/* Time Presets */}
-        <div className="flex flex-wrap gap-2">
-          {timePresets.map((preset) => (
-            <button
-              key={preset.name}
-              onClick={() => {
-                setSpeakers(
-                  speakers.map((speaker) =>
-                    speaker.id === activeSpeakerId
-                      ? {
-                          ...speaker,
-                          thresholds: {
-                            green: preset.green,
-                            yellow: preset.yellow,
-                            red: preset.red,
-                          },
-                        }
-                      : speaker,
-                  ),
-                )
-              }}
-              className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-                activeSpeaker.thresholds.green === preset.green &&
-                activeSpeaker.thresholds.yellow === preset.yellow &&
-                activeSpeaker.thresholds.red === preset.red
-                  ? "bg-blue-500 text-white border-blue-500"
-                  : "bg-background text-foreground border-border hover:border-blue-500"
-              }`}
-            >
-              {preset.name}
-            </button>
-          ))}
-          <button
-            onClick={() => {
-              setCustomThresholds({ ...activeSpeaker.thresholds })
-              setIsCustomModalOpen(true)
-            }}
-            className="px-3 py-1 rounded-full text-sm font-medium border bg-background text-foreground border-border hover:border-blue-500 transition-colors"
-          >
-            Custom
-          </button>
-        </div>
+      {/* Active Speaker Name and Settings */}
+      <div className="w-full max-w-md mb-4 flex justify-between items-center">
+        <h2 className="text-xl font-semibold">{activeSpeaker.name}</h2>
+        <button onClick={() => setIsEditingThresholds(true)} className="p-2 rounded-full bg-muted text-foreground">
+          <Settings size={20} />
+        </button>
       </div>
 
       {/* Timer Display */}
