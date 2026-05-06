@@ -3,7 +3,8 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Plus, X, User, Play, Pause, RotateCcw, Settings, Check, Edit2, Save } from "lucide-react"
+import { Plus, X, User, Play, Pause, RotateCcw, Settings, Check, Edit2, Save, Trash2, Download } from "lucide-react"
+import { useSpeechRecords } from "@/hooks/use-speech-records"
 
 type TimeThresholds = {
   green: number
@@ -43,6 +44,7 @@ const DEFAULT_THRESHOLDS: TimeThresholds = {
 }
 
 export default function SpeechTimer() {
+  const { records, saveSpeech, deleteRecord, clearAllRecords } = useSpeechRecords()
   const [speakers, setSpeakers] = useState<Speaker[]>([
     {
       id: "speaker1",
@@ -169,15 +171,14 @@ export default function SpeechTimer() {
 
   const finishSpeech = () => {
     if (activeSpeaker.time > 0) {
-      // Record the speech
-      const newRecord: SpeechRecord = {
-        id: `record${Date.now()}`,
-        speakerId: activeSpeaker.id,
-        speakerName: activeSpeaker.name,
-        duration: activeSpeaker.time,
-        timestamp: new Date(),
-      }
-      setRecords([newRecord, ...records])
+      // Save to database
+      saveSpeech(
+        activeSpeaker.name,
+        activeSpeaker.time,
+        activeSpeaker.thresholds.green,
+        activeSpeaker.thresholds.yellow,
+        activeSpeaker.thresholds.red
+      )
 
       // Reset the timer
       resetTimer()
@@ -714,18 +715,35 @@ export default function SpeechTimer() {
 
       {/* Speech Records */}
       {records.length > 0 && (
-        <div className="w-full max-w-md">
-          <h3 className="text-lg font-medium mb-2">Recent Speeches</h3>
-          <div className="border rounded-lg divide-y">
+        <div className="w-full max-w-md px-4 mt-6">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-medium">Recent Speeches</h3>
+            <button
+              onClick={() => clearAllRecords()}
+              className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1"
+            >
+              <Trash2 size={14} /> Clear
+            </button>
+          </div>
+          <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
             {records.map((record) => (
-              <div key={record.id} className="p-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{record.speakerName}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(record.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+              <div key={record.id} className="p-3 flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="font-medium text-sm">{record.speakerName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {record.date} • Duration: {formatTime(record.duration)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Green: {formatTime(record.greenThreshold)} | Yellow: {formatTime(record.yellowThreshold)} | Red: {formatTime(record.redThreshold)}
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground">Duration: {formatTime(record.duration)}</div>
+                <button
+                  onClick={() => record.id && deleteRecord(record.id)}
+                  className="text-red-500 hover:text-red-700 p-1 ml-2"
+                  title="Delete record"
+                >
+                  <X size={16} />
+                </button>
               </div>
             ))}
           </div>

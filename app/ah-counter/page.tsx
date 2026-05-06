@@ -3,7 +3,8 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Plus, X, User, RotateCcw, Edit2, Save } from "lucide-react"
+import { Plus, X, User, RotateCcw, Edit2, Save, Trash2 } from "lucide-react"
+import { useAhCounterRecords } from "@/hooks/use-ah-counter-records"
 
 type FillerWord = {
   id: string
@@ -32,6 +33,7 @@ const FILLER_WORDS: FillerWord[] = [
 ]
 
 export default function AhCounter() {
+  const { records, saveAhCounterSession, deleteRecord, clearAllRecords } = useAhCounterRecords()
   const [speakers, setSpeakers] = useState<Speaker[]>([
     {
       id: "speaker1",
@@ -412,10 +414,70 @@ export default function AhCounter() {
         </button>
       </div>
 
+      {/* Save Session Button */}
+      <button
+        onClick={() => {
+          saveAhCounterSession(
+            activeSpeaker.name,
+            activeSpeaker.counts["ah"] || 0,
+            activeSpeaker.counts["um"] || 0,
+            activeSpeaker.counts["er"] || 0,
+            activeSpeaker.counts["so"] || 0,
+            activeSpeaker.counts["like"] || 0,
+            activeSpeaker.counts["you-know"] || 0
+          )
+          resetSpeakerCounts(activeSpeakerId)
+        }}
+        className="mt-4 w-full max-w-md rounded-lg bg-green-500 px-4 py-3 text-white font-medium"
+      >
+        Save & Reset Session
+      </button>
+
       {/* Last Action Indicator */}
       {lastRecorded && (
-        <div className="mt-6 text-sm text-muted-foreground">
+        <div className="mt-4 text-sm text-muted-foreground">
           Last recorded: "{lastRecorded.wordName}" for {lastRecorded.speakerName}
+        </div>
+      )}
+
+      {/* Ah Counter Records */}
+      {records.length > 0 && (
+        <div className="w-full max-w-md px-4 mt-6">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-medium">Session History</h3>
+            <button
+              onClick={() => clearAllRecords()}
+              className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1"
+            >
+              <Trash2 size={14} /> Clear
+            </button>
+          </div>
+          <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+            {records.map((record) => (
+              <div key={record.id} className="p-3 flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="font-medium text-sm">{record.speakerName}</div>
+                  <div className="text-xs text-muted-foreground mb-1">{record.date}</div>
+                  <div className="text-xs text-muted-foreground grid grid-cols-2 gap-1">
+                    <span>Ah: {record.ah}</span>
+                    <span>Um: {record.um}</span>
+                    <span>Er: {record.er}</span>
+                    <span>So: {record.so}</span>
+                    <span>Like: {record.like}</span>
+                    <span>You Know: {record.youKnow}</span>
+                  </div>
+                  <div className="text-xs font-medium text-muted-foreground mt-1">Total: {record.totalCount}</div>
+                </div>
+                <button
+                  onClick={() => record.id && deleteRecord(record.id)}
+                  className="text-red-500 hover:text-red-700 p-1 ml-2"
+                  title="Delete record"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
