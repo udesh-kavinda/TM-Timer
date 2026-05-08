@@ -33,6 +33,20 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icon-192x192.png" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <script suppressHydrationWarning>
+          {`(function() {
+            try {
+              const theme = localStorage.getItem('toastmaster-theme');
+              const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              const isDark = theme === 'dark' || (theme === null && systemDark);
+              if (isDark) {
+                document.documentElement.classList.add('dark');
+              } else {
+                document.documentElement.classList.remove('dark');
+              }
+            } catch (e) {}
+          })()`}
+        </script>
       </head>
       <body suppressHydrationWarning>
         <LayoutClient>{children}</LayoutClient>

@@ -53,7 +53,7 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Fetch event - Stale while revalidate for pages, cache first for assets
+// Fetch event - Cache first for instant loading (native app feel)
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
@@ -72,13 +72,18 @@ self.addEventListener('fetch', (event) => {
   const isAsset = url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2)$/i)
 
   if (isAsset) {
-    // Cache first for assets
+    // Cache first for assets - instant loading
     event.respondWith(
       caches.match(request).then((response) => {
-        return response || fetch(request).then((networkResponse) => {
+        if (response) {
+          return response
+        }
+        
+        return fetch(request).then((networkResponse) => {
           if (networkResponse.ok) {
-            caches.open(ASSET_CACHE).then((cache) => {
-              cache.put(request, networkResponse.clone())
+            const cache = caches.open(ASSET_CACHE)
+            cache.then((c) => {
+              c.put(request, networkResponse.clone())
             })
           }
           return networkResponse
@@ -87,26 +92,48 @@ self.addEventListener('fetch', (event) => {
         })
       })
     )
+  } else if (isPage) {
+    // Cache first for pages - instant navigation like native app
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        // Return cached page immediately for instant load
+        if (cachedResponse) {
+          // Update cache in background (stale-while-revalidate pattern)
+          fetch(request).then((response) => {
+            if (response.ok) {
+              caches.open(RUNTIME_CACHE).then((cache) => {
+                cache.put(request, response.clone())
+              })
+            }
+          }).catch(() => {})
+          
+          return cachedResponse
+        }
+        
+        // No cache - fetch from network
+        return fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              caches.open(RUNTIME_CACHE).then((cache) => {
+                cache.put(request, response.clone())
+              })
+            }
+            return response
+          })
+          .catch(() => {
+            // Return offline fallback
+            return caches.match('/').catch(() => {
+              return new Response('Offline - Page not available', { status: 503 })
+            })
+          })
+      })
+    )
   } else {
-    // Network first for pages, with cache fallback
+    // For other requests (API calls, etc)
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response.ok && isPage) {
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, response.clone())
-            })
-          }
-          return response
-        })
         .catch(() => {
-          return caches.match(request).then((response) => {
-            if (response) {
-              return response
-            }
-            // Return offline page if available
-            return caches.match('/')
-          })
+          return caches.match(request)
         })
     )
   }
