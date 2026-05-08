@@ -1,7 +1,17 @@
 import Dexie, { type Table } from 'dexie';
 
+export interface Meeting {
+  id?: number;
+  name: string;
+  date: string;
+  startTime: string;
+  endTime?: string;
+  createdAt: number;
+}
+
 export interface SpeechRecord {
   id?: number;
+  meetingId: number;
   speakerName: string;
   duration: number; // in seconds
   greenThreshold: number;
@@ -13,6 +23,7 @@ export interface SpeechRecord {
 
 export interface AhCounterRecord {
   id?: number;
+  meetingId: number;
   speakerName: string;
   ah: number;
   um: number;
@@ -26,14 +37,16 @@ export interface AhCounterRecord {
 }
 
 export class ToastmasterDB extends Dexie {
+  meetings!: Table<Meeting>;
   speeches!: Table<SpeechRecord>;
   ahCounters!: Table<AhCounterRecord>;
 
   constructor() {
     super('ToastmasterDB');
-    this.version(1).stores({
-      speeches: '++id, timestamp, date',
-      ahCounters: '++id, timestamp, date',
+    this.version(2).stores({
+      meetings: '++id, createdAt',
+      speeches: '++id, meetingId, timestamp, date',
+      ahCounters: '++id, meetingId, timestamp, date',
     });
   }
 }

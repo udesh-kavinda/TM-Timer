@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { Home, Clock, MessageCircle } from "lucide-react"
+import { Home, Clock, MessageCircle, History } from "lucide-react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { PWARegister } from "@/components/pwa-register"
@@ -23,6 +23,10 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
         <a href="/ah-counter" className="flex flex-col items-center p-2 text-foreground">
           <MessageCircle size={24} />
           <span className="text-xs mt-1">Ah Counter</span>
+        </a>
+        <a href="/meeting-records" className="flex flex-col items-center p-2 text-foreground">
+          <History size={24} />
+          <span className="text-xs mt-1">Records</span>
         </a>
         <ThemeToggle />
       </nav>

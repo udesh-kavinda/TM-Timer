@@ -1,30 +1,39 @@
 import { useState, useEffect } from 'react';
 import { db, type SpeechRecord } from '@/lib/db';
 
-export function useSpeechRecords() {
+export function useSpeechRecords(meetingId?: number) {
   const [records, setRecords] = useState<SpeechRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadRecords = async () => {
     setIsLoading(true);
-    const allRecords = await db.speeches.orderBy('timestamp').reverse().toArray();
-    setRecords(allRecords);
+    let query = db.speeches.orderBy('timestamp').reverse();
+    
+    if (meetingId) {
+      const allRecords = await db.speeches.where('meetingId').equals(meetingId).toArray();
+      setRecords(allRecords.sort((a, b) => b.timestamp - a.timestamp));
+    } else {
+      const allRecords = await query.toArray();
+      setRecords(allRecords);
+    }
     setIsLoading(false);
   };
 
   useEffect(() => {
     loadRecords();
-  }, []);
+  }, [meetingId]);
 
   const saveSpeech = async (
     speakerName: string,
     duration: number,
     greenThreshold: number,
     yellowThreshold: number,
-    redThreshold: number
+    redThreshold: number,
+    meetingId?: number
   ) => {
     const now = new Date();
     const record: SpeechRecord = {
+      ...(meetingId && { meetingId }),
       speakerName,
       duration,
       greenThreshold,

@@ -1,20 +1,25 @@
 import { useState, useEffect } from 'react';
 import { db, type AhCounterRecord } from '@/lib/db';
 
-export function useAhCounterRecords() {
+export function useAhCounterRecords(meetingId?: number) {
   const [records, setRecords] = useState<AhCounterRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadRecords = async () => {
     setIsLoading(true);
-    const allRecords = await db.ahCounters.orderBy('timestamp').reverse().toArray();
-    setRecords(allRecords);
+    if (meetingId) {
+      const allRecords = await db.ahCounters.where('meetingId').equals(meetingId).toArray();
+      setRecords(allRecords.sort((a, b) => b.timestamp - a.timestamp));
+    } else {
+      const allRecords = await db.ahCounters.orderBy('timestamp').reverse().toArray();
+      setRecords(allRecords);
+    }
     setIsLoading(false);
   };
 
   useEffect(() => {
     loadRecords();
-  }, []);
+  }, [meetingId]);
 
   const saveAhCounterSession = async (
     speakerName: string,
@@ -23,11 +28,13 @@ export function useAhCounterRecords() {
     er: number,
     so: number,
     like: number,
-    youKnow: number
+    youKnow: number,
+    meetingId?: number
   ) => {
     const now = new Date();
     const totalCount = ah + um + er + so + like + youKnow;
     const record: AhCounterRecord = {
+      ...(meetingId && { meetingId }),
       speakerName,
       ah,
       um,

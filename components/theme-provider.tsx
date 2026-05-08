@@ -1,10 +1,17 @@
 "use client"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import type { ThemeProviderProps } from "next-themes"
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
-    <NextThemesProvider {...props} forcedTheme={undefined} storageKey="toastmaster-theme">
+    <NextThemesProvider 
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      storageKey="toastmaster-theme"
+      enableColorScheme={false}
+      nonce="inline-theme"
+    >
       {children}
     </NextThemesProvider>
   )
