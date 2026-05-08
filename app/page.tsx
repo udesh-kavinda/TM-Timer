@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Bell, Play, RotateCcw } from "lucide-react"
+import { Bell, Play, RotateCcw, Volume2, VolumeX } from "lucide-react"
 
 export default function RoundRobinTimer() {
   const [time, setTime] = useState(20)
   const [isRunning, setIsRunning] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function RoundRobinTimer() {
   }
 
   const ringBell = () => {
-    if (audioRef.current) {
+    if (!isMuted && audioRef.current) {
       // Create a new audio instance for overlapping sounds
       const audio = new Audio(
         "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bicycle-bell-155622-onnN23vCajWoJnzFKT2hZ46FN5wWHO.mp3",
@@ -57,6 +58,18 @@ export default function RoundRobinTimer() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <button
+          onClick={() => setIsMuted(!isMuted)}
+          className={`p-3 rounded-full flex items-center justify-center transition-colors ${
+            isMuted ? "bg-red-500 text-white" : "bg-blue-500 text-white"
+          }`}
+          title={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+        </button>
+      </div>
+
       <h1 className="text-2xl font-bold mb-2">Round Robin Timer</h1>
 
       <div className="my-6 text-7xl font-bold">{time}</div>
