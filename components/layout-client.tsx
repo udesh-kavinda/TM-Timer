@@ -2,12 +2,11 @@
 
 import type React from "react"
 import { Home, Clock, MessageCircle, History } from "lucide-react"
-import { ThemeProvider } from "@/components/theme-provider"
 import { PWARegister } from "@/components/pwa-register"
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <>
       <PWARegister />
       <div className="min-h-screen pb-16">{children}</div>
       <nav className="fixed bottom-0 left-0 right-0 flex justify-around bg-background border-t p-3 shadow-lg">
@@ -28,6 +27,6 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
           <span className="text-xs mt-1">Records</span>
         </a>
       </nav>
-    </ThemeProvider>
+    </>
   )
 }
