@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Bell, Play, RotateCcw, Volume2, VolumeX } from "lucide-react"
+import { Bell, Play, RotateCcw, Volume2, VolumeX, HelpCircle } from "lucide-react"
+import Link from "next/link"
 
 export default function RoundRobinTimer() {
   const [time, setTime] = useState(20)
@@ -58,6 +59,12 @@ export default function RoundRobinTimer() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="absolute top-4 left-4">
+        <Link href="/getting-started" className="p-3 rounded-full bg-gray-500 text-white hover:bg-gray-600 flex items-center justify-center transition-colors">
+          <HelpCircle className="h-6 w-6" />
+        </Link>
+      </div>
+
       <div className="absolute top-4 right-4">
         <button
           onClick={() => setIsMuted(!isMuted)}

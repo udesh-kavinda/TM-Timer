@@ -3,7 +3,6 @@
 import type React from "react"
 import { Home, Clock, MessageCircle, History } from "lucide-react"
 import { ThemeProvider } from "@/components/theme-provider"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { PWARegister } from "@/components/pwa-register"
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
@@ -28,7 +27,6 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
           <History size={24} />
           <span className="text-xs mt-1">Records</span>
         </a>
-        <ThemeToggle />
       </nav>
     </ThemeProvider>
   )
