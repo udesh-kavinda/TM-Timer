@@ -1,21 +1,36 @@
 const CACHE_NAME = 'toastmaster-timer-v1'
 const RUNTIME_CACHE = 'toastmaster-timer-runtime'
+const ASSET_CACHE = 'toastmaster-assets'
 
 const STATIC_ASSETS = [
   '/',
   '/speech-timer',
   '/ah-counter',
+  '/meeting-records',
+  '/getting-started',
   '/manifest.json',
+]
+
+const ASSET_PATHS = [
+  '/icon-192x192.png',
+  '/icon-512x512.png',
 ]
 
 // Install event
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {
-        // Some assets might fail to cache, that's ok
+    Promise.all([
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(STATIC_ASSETS).catch(() => {
+          console.log('Some assets failed to cache during install')
+        })
+      }),
+      caches.open(ASSET_CACHE).then((cache) => {
+        return cache.addAll(ASSET_PATHS).catch(() => {
+          console.log('Some assets failed to cache')
+        })
       })
-    }).then(() => {
+    ]).then(() => {
       self.skipWaiting()
     })
   )
@@ -27,7 +42,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE && cacheName !== ASSET_CACHE) {
             return caches.delete(cacheName)
           }
         })
@@ -38,7 +53,7 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Fetch event - Network first, falling back to cache
+// Fetch event - Stale while revalidate for pages, cache first for assets
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
@@ -52,29 +67,47 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cache successful responses
-        if (response.ok) {
-          const cache = caches.open(RUNTIME_CACHE)
-          cache.then((c) => {
-            c.put(request, response.clone())
-          })
-        }
-        return response
-      })
-      .catch(() => {
-        // Fallback to cache on network failure
-        return caches.match(request).then((response) => {
-          return response || new Response('Offline - Please check your connection', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({
-              'Content-Type': 'text/plain',
-            }),
-          })
+  const url = new URL(request.url)
+  const isPage = request.headers.get('accept')?.includes('text/html')
+  const isAsset = url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2)$/i)
+
+  if (isAsset) {
+    // Cache first for assets
+    event.respondWith(
+      caches.match(request).then((response) => {
+        return response || fetch(request).then((networkResponse) => {
+          if (networkResponse.ok) {
+            caches.open(ASSET_CACHE).then((cache) => {
+              cache.put(request, networkResponse.clone())
+            })
+          }
+          return networkResponse
+        }).catch(() => {
+          return new Response('Asset not available', { status: 404 })
         })
       })
-  )
+    )
+  } else {
+    // Network first for pages, with cache fallback
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok && isPage) {
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, response.clone())
+            })
+          }
+          return response
+        })
+        .catch(() => {
+          return caches.match(request).then((response) => {
+            if (response) {
+              return response
+            }
+            // Return offline page if available
+            return caches.match('/')
+          })
+        })
+    )
+  }
 })

@@ -3,36 +3,40 @@
 import { useEffect, useState } from 'react'
 
 export function useTheme() {
-  const [isDark, setIsDark] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const [isDark, setIsDark] = useState(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return false
+    
+    const stored = localStorage.getItem('toastmaster-theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    return stored === 'dark' || (stored === null && prefersDark)
+  })
 
   useEffect(() => {
-    setIsMounted(true)
-    // Check localStorage and system preference
-    const stored = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-
-    const shouldBeDark = stored === 'dark' || (stored === null && prefersDark)
-    setIsDark(shouldBeDark)
-    updateTheme(shouldBeDark)
-  }, [])
+    // Apply theme immediately
+    const root = document.documentElement
+    if (isDark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [isDark])
 
   const updateTheme = (dark: boolean) => {
     const root = document.documentElement
     if (dark) {
       root.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
+      localStorage.setItem('toastmaster-theme', 'dark')
     } else {
       root.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
+      localStorage.setItem('toastmaster-theme', 'light')
     }
+    setIsDark(dark)
   }
 
   const toggleTheme = () => {
-    const newValue = !isDark
-    setIsDark(newValue)
-    updateTheme(newValue)
+    updateTheme(!isDark)
   }
 
-  return { isDark, toggleTheme, isMounted }
+  return { isDark, toggleTheme }
 }

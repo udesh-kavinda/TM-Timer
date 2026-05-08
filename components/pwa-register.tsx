@@ -6,7 +6,7 @@ export function PWARegister() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker
-        .register('/sw.js')
+        .register('/api/sw')
         .then((registration) => {
           console.log('[v0] Service Worker registered:', registration)
         })

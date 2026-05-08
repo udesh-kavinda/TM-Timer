@@ -1,15 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useEffect } from "react"
 import { Home, Clock, MessageCircle, History } from "lucide-react"
 import { PWARegister } from "@/components/pwa-register"
 import { useTheme } from "@/hooks/use-theme"
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
-  const { isMounted } = useTheme()
-
-  if (!isMounted) return <>{children}</>
+  // Initialize theme on client
+  useTheme()
 
   return (
     <>
